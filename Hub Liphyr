@@ -15,6 +15,13 @@ Rayfield:Notify({
    Image = 74306962782905
 })
 
+-- Ler chaves do GitHub
+local rawKeys = game:HttpGet("https://raw.githubusercontent.com/igorphxwi-blip/Hub-Lp-/refs/heads/main/keys.txt")
+local keysArray = {}
+for line in rawKeys:gmatch("[^\r\n]+") do
+    table.insert(keysArray, line)
+end
+
 -- Criação da janela
 local Window = Rayfield:CreateWindow({
    Name = "Liphyr | LPX v1",
@@ -51,9 +58,8 @@ local Window = Rayfield:CreateWindow({
        Note = "COMPRE SUA KEY COM @LIPHYR NO DISCORD!",
        FileName = "Key",
        SaveKey = true,
-       GrabKeyFromSite = true,
-       GrabKeyFromSiteUrl = "https://raw.githubusercontent.com/igorphxwi-blip/Hub-Lp-/refs/heads/main/keys.txt",
-       Key = {} -- Deixe vazio, pois as chaves serão carregadas do arquivo
+       GrabKeyFromSite = false,
+       Key = keysArray
    }
 })
 
@@ -214,11 +220,4 @@ ConfigTab:CreateButton({
     Name = "Copiar Discord",
     Callback = function()
         setclipboard("https://discord.gg/75PCbuNn")
-        Rayfield:Notify({
-            Title = "Copiado!",
-            Content = "Link do Discord copiado ✅",
-            Duration = 5,
-            Image = 74306962782905
-        })
-    end
-})
+       
