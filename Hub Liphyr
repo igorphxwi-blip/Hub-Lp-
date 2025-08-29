@@ -1,61 +1,72 @@
--- URL do seu arquivo de keys no GitHub
+-- URL do Rayfield
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- URL do arquivo de keys no GitHub
 local KeysURL = "https://raw.githubusercontent.com/igorphxwi-blip/Hub-Lp-/refs/heads/main/keys.txt"
 
--- Função para pedir a key
-local function AskKey()
-    local plr = game.Players.LocalPlayer
-    local key = plr:PromptInput("Digite sua Key", "Coloque a key que você comprou:", "")
-    return key
-end
-
--- Função para validar a key
-local function ValidateKey(userKey)
+-- Função para buscar e validar key
+local function CheckKey(userKey)
     local success, data = pcall(function()
         return game:HttpGet(KeysURL)
     end)
-
     if not success then
-        warn("Erro ao buscar keys no GitHub!")
+        Rayfield:Notify({
+            Title = "Erro",
+            Content = "Não foi possível conectar ao servidor de keys!",
+            Duration = 5,
+            Image = 74306962782905
+        })
         return false
     end
-
-    for k in string.gmatch(data, "[^\r\n]+") do
-        if k == userKey then
-            return true
-        end
+    -- transforma em tabela separando por linha
+    local keys = {}
+    for key in string.gmatch(data, "[^\r\n]+") do
+        keys[key] = true
     end
-
-    return false
+    return keys[userKey] == true
 end
 
--- Pedir key antes de iniciar o Rayfield
-local inputKey = AskKey()
-if not ValidateKey(inputKey) then
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Key Inválida ❌",
-        Text = "Sua key não foi aceita. Entre em contato com @liphyr",
-        Duration = 5
+-- Solicitar key antes de abrir o script
+local UserKey = Rayfield:Prompt({
+    Title = "Key System",
+    Subtitle = "Digite sua key para continuar",
+    Default = "",
+    Placeholder = "Insira sua key",
+    TextSubmit = "Verificar",
+    Numeric = false
+})
+
+if not UserKey or UserKey == "" then
+    Rayfield:Notify({
+        Title = "Key inválida",
+        Content = "Você não inseriu nenhuma key!",
+        Duration = 5,
+        Image = 74306962782905
     })
-    return -- Para o script se a key for inválida
+    return
 end
 
--- Se a key for válida, inicia o Rayfield normalmente
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+if not CheckKey(UserKey) then
+    Rayfield:Notify({
+        Title = "Key inválida",
+        Content = "A key que você digitou não é válida!",
+        Duration = 5,
+        Image = 74306962782905
+    })
+    return
+end
 
--- Notificações iniciais
+-- Key válida
 Rayfield:Notify({
-   Title = "⚠️ Aviso Importante",
-   Content = "Vou Avisar No Discord Quando Expira o Script🚨",
-   Duration = 12,
-   Image = 74306962782905
+    Title = "Key aceita",
+    Content = "Bem-vindo, Cliente!",
+    Duration = 5,
+    Image = 74306962782905
 })
 
-Rayfield:Notify({
-   Title = "Liphyr LPX",
-   Content = "tt:@igorphs",
-   Duration = 6.5,
-   Image = 74306962782905
-})
+-- ================================
+-- A partir daqui você mantém todo seu código original
+-- ================================
 
 -- Criação da janela
 local Window = Rayfield:CreateWindow({
@@ -85,171 +96,11 @@ local Window = Rayfield:CreateWindow({
        Enabled = false,
        Invite = "noinvitelink",
        RememberJoins = true
-   }
+   },
+   KeySystem = false -- DESATIVADO porque agora usamos key externa
 })
 
--- Aba de Scripts
-local ScriptsTab = Window:CreateTab("Scripts | LPX", 0)
-ScriptsTab:CreateParagraph({Title = "Note", Content = "The hub is open-sourced so you can check the hub for loggers!"})
-
-local function createScriptButton(name, url)
-    ScriptsTab:CreateButton({
-        Name = name,
-        Callback = function()
-            loadstring(game:HttpGet(url))()
-            Rayfield:Notify({
-                Title = name.." Ativado",
-                Content = "Script executado ✅",
-                Duration = 5,
-                Image = 74306962782905
-            })
-        end
-    })
-end
-
-createScriptButton("MirandaTween+","https://pastefy.app/TnWWJ4NS/raw")
-createScriptButton("Auto Secret","https://tcscripts.discloud.app/scripts/autosecret")
-createScriptButton("Spawner Brainrot","https://gitlab.com/traxscriptss/traxscriptss/-/raw/main/visual2.lua")
-createScriptButton("Chilli Hub","https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua")
-createScriptButton("Grow a Garden","https://lunor.dev/loader")
-createScriptButton("99 Noites","https://raw.githubusercontent.com/kedd063/KdmlScripts/refs/heads/main/99-Night-İn-The-Forest")
-createScriptButton("BloxFruits","https://raw.githubusercontent.com/Overgustx2/Main/refs/heads/main/BloxFruits_25.html")
-
--- Aba Player
-local PlayerTab = Window:CreateTab("Player", 0)
-
-local ESPEnabled = false
-local InfiniteJump = false
-local GodMode = false
-local SpeedEnabled = false
-local SpeedValue = 16 -- Valor padrão
-
--- Saudação automática
-Rayfield:Notify({
-    Title = "Olá Cliente "..game.Players.LocalPlayer.Name,
-    Content = "Bem-vindo!",
-    Duration = 5,
-    Image = 74306962782905
-})
-
--- ESP Player
-PlayerTab:CreateToggle({
-    Name = "ESP Player",
-    CurrentValue = false,
-    Callback = function(value)
-        ESPEnabled = value
-        for i, plr in pairs(game.Players:GetPlayers()) do
-            if plr ~= game.Players.LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                local highlight = plr.Character:FindFirstChild("ESPHighlight")
-                if value then
-                    if not highlight then
-                        highlight = Instance.new("Highlight")
-                        highlight.Name = "ESPHighlight"
-                        highlight.Adornee = plr.Character
-                        highlight.FillColor = Color3.fromRGB(111,0,255)
-                        highlight.OutlineColor = Color3.fromRGB(60,0,100)
-                        highlight.Parent = plr.Character
-                    end
-                else
-                    if highlight then
-                        highlight:Destroy()
-                    end
-                end
-            end
-        end
-        Rayfield:Notify({
-            Title = "ESP Player",
-            Content = value and "Ativado ✅" or "Desativado ❌",
-            Duration = 5,
-            Image = 74306962782905
-        })
-    end
-})
-
--- God Mode REAL
-PlayerTab:CreateToggle({
-    Name = "God Mode",
-    CurrentValue = false,
-    Callback = function(value)
-        GodMode = value
-        Rayfield:Notify({
-            Title = "God Mode",
-            Content = value and "Ativado ✅" or "Desativado ❌",
-            Duration = 5,
-            Image = 74306962782905
-        })
-    end
-})
-
-game:GetService("RunService").Heartbeat:Connect(function()
-    local plr = game.Players.LocalPlayer
-    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
-        local hum = plr.Character.Humanoid
-        if GodMode then
-            hum.Health = hum.MaxHealth
-        end
-        if SpeedEnabled then
-            hum.WalkSpeed = SpeedValue
-        end
-    end
-end)
-
--- Infinite Jump
-PlayerTab:CreateToggle({
-    Name = "Infinite Jump",
-    CurrentValue = false,
-    Callback = function(value)
-        InfiniteJump = value
-        Rayfield:Notify({
-            Title = "Infinite Jump",
-            Content = value and "Ativado ✅" or "Desativado ❌",
-            Duration = 5,
-            Image = 74306962782905
-        })
-    end
-})
-
-game:GetService("UserInputService").JumpRequest:Connect(function()
-    if InfiniteJump then
-        local plr = game.Players.LocalPlayer
-        if plr.Character and plr.Character:FindFirstChild("Humanoid") then
-            plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-    end
-end)
-
--- Speed regulável
-PlayerTab:CreateSlider({
-    Name = "Speed Player",
-    Range = {16, 100},
-    Increment = 1,
-    Suffix = " WalkSpeed",
-    CurrentValue = 16,
-    Flag = "SpeedSlider",
-    Callback = function(value)
-        SpeedValue = value
-        SpeedEnabled = value > 16
-        Rayfield:Notify({
-            Title = "Speed",
-            Content = SpeedEnabled and ("Ativado ✅ | "..SpeedValue) or "Desativado ❌",
-            Duration = 5,
-            Image = 74306962782905
-        })
-    end
-})
-
--- Aba Configurações
-local ConfigTab = Window:CreateTab("Configurações", 0)
-ConfigTab:CreateParagraph({Title="Note", Content="Créditos: @liphyr"})
-ConfigTab:CreateButton({
-    Name = "Copiar Discord",
-    Callback = function()
-        setclipboard("https://discord.gg/75PCbuNn")
-        Rayfield:Notify({
-            Title = "Copiado!",
-            Content = "Link do Discord copiado ✅",
-            Duration = 5,
-            Image = 74306962782905
-        })
-    end
-})
+-- ================================
+-- Aqui você coloca todo o restante do seu script
+-- ScriptsTab, PlayerTab, ConfigTab, ESP, God, Speed, Infinite Jump etc.
+-- ================================
