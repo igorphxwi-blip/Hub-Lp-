@@ -1,11 +1,45 @@
--- Pegar as keys do GitHub
-local rawKeys = game:HttpGet("https://raw.githubusercontent.com/igorphxwi-blip/Hub-Lp-/refs/heads/main/keys.txt")
-local keysArray = {}
-for line in rawKeys:gmatch("[^\r\n]+") do
-    table.insert(keysArray, line)
+-- URL do seu arquivo de keys no GitHub
+local KeysURL = "https://raw.githubusercontent.com/igorphxwi-blip/Hub-Lp-/refs/heads/main/keys.txt"
+
+-- Função para pedir a key
+local function AskKey()
+    local plr = game.Players.LocalPlayer
+    local key = plr:PromptInput("Digite sua Key", "Coloque a key que você comprou:", "")
+    return key
 end
 
--- Carregar Rayfield
+-- Função para validar a key
+local function ValidateKey(userKey)
+    local success, data = pcall(function()
+        return game:HttpGet(KeysURL)
+    end)
+
+    if not success then
+        warn("Erro ao buscar keys no GitHub!")
+        return false
+    end
+
+    for k in string.gmatch(data, "[^\r\n]+") do
+        if k == userKey then
+            return true
+        end
+    end
+
+    return false
+end
+
+-- Pedir key antes de iniciar o Rayfield
+local inputKey = AskKey()
+if not ValidateKey(inputKey) then
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Key Inválida ❌",
+        Text = "Sua key não foi aceita. Entre em contato com @liphyr",
+        Duration = 5
+    })
+    return -- Para o script se a key for inválida
+end
+
+-- Se a key for válida, inicia o Rayfield normalmente
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Notificações iniciais
@@ -29,7 +63,7 @@ local Window = Rayfield:CreateWindow({
    Icon = 74306962782905,
    LoadingTitle = "Liphyr/LPX",
    LoadingSubtitle = "by liphyr",
-   ShowText = "LPX v1",
+   ShowText = "LPX v0.0.1",
    Theme = "Custom",
    CustomColors = {
        SchemeColor = Color3.fromRGB(111, 0, 255),
@@ -51,16 +85,6 @@ local Window = Rayfield:CreateWindow({
        Enabled = false,
        Invite = "noinvitelink",
        RememberJoins = true
-   },
-   KeySystem = true,
-   KeySettings = {
-       Title = "Liphyr | LPX v1",
-       Subtitle = "Key System",
-       Note = "COMPRE SUA KEY COM @LIPHYR NO DISCORD!",
-       FileName = "Key",
-       SaveKey = true,
-       GrabKeyFromSite = false,
-       Key = keysArray
    }
 })
 
