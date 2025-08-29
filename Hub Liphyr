@@ -1,3 +1,11 @@
+-- Pegar as keys do GitHub
+local rawKeys = game:HttpGet("https://raw.githubusercontent.com/igorphxwi-blip/Hub-Lp-/refs/heads/main/keys.txt")
+local keysArray = {}
+for line in rawKeys:gmatch("[^\r\n]+") do
+    table.insert(keysArray, line)
+end
+
+-- Carregar Rayfield
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Notificações iniciais
@@ -15,20 +23,13 @@ Rayfield:Notify({
    Image = 74306962782905
 })
 
--- Ler chaves do GitHub
-local rawKeys = game:HttpGet("https://raw.githubusercontent.com/igorphxwi-blip/Hub-Lp-/refs/heads/main/keys.txt")
-local keysArray = {}
-for line in rawKeys:gmatch("[^\r\n]+") do
-    table.insert(keysArray, line)
-end
-
 -- Criação da janela
 local Window = Rayfield:CreateWindow({
    Name = "Liphyr | LPX v1",
    Icon = 74306962782905,
    LoadingTitle = "Liphyr/LPX",
    LoadingSubtitle = "by liphyr",
-   ShowText = "LPX v0.0.1",
+   ShowText = "LPX v1",
    Theme = "Custom",
    CustomColors = {
        SchemeColor = Color3.fromRGB(111, 0, 255),
@@ -220,4 +221,11 @@ ConfigTab:CreateButton({
     Name = "Copiar Discord",
     Callback = function()
         setclipboard("https://discord.gg/75PCbuNn")
-       
+        Rayfield:Notify({
+            Title = "Copiado!",
+            Content = "Link do Discord copiado ✅",
+            Duration = 5,
+            Image = 74306962782905
+        })
+    end
+})
