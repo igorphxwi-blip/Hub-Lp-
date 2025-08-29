@@ -9,7 +9,11 @@ local function fetchKeys()
 end
 
 -- Solicitar a key do usuário
-local userKey = Rayfield:PromptInput({Title = "Digite sua Key", Default = "", Placeholder = "Key aqui..."})
+local userKey = Rayfield:PromptInput({
+    Title = "Digite sua Key",
+    Default = "",
+    Placeholder = "Key aqui..."
+})
 
 local validKeys = fetchKeys()
 if table.find(validKeys, userKey) then
@@ -29,95 +33,75 @@ end
 
 -- Criação da janela principal
 local Window = Rayfield:CreateWindow({
-   Name = "Liphyr | LPX v0.0.1",
-   Icon = 17868600705,
-   LoadingTitle = "Liphyr/LPX",
-   LoadingSubtitle = "by liphyr",
-   ShowText = "LPX v0.0.1",
-   Theme = "Light",
-   ToggleUIKeybind = "Q",
-   DisableRayfieldPrompts = false,
-   DisableBuildWarnings = false,
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = nil,
-      FileName = "CFGSaverLiphyrLPX"
-   },
-   Discord = {
-      Enabled = false,
-      Invite = "noinvitelink",
-      RememberJoins = true
-   }
+    Name = "Liphyr | LPX v0.0.1",
+    Icon = 17868600705, -- substitua pelo ID do seu decal se quiser
+    LoadingTitle = "Liphyr/LPX",
+    LoadingSubtitle = "by liphyr",
+    ShowText = "LPX v0.0.1",
+    Theme = "Light",
+    ToggleUIKeybind = "Q",
+    DisableRayfieldPrompts = false,
+    DisableBuildWarnings = false,
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = nil,
+        FileName = "CFGSaverLiphyrLPX"
+    },
+    Discord = {
+        Enabled = false,
+        Invite = "noinvitelink",
+        RememberJoins = true
+    }
 })
 
 -- Aba de Scripts
 local Tab = Window:CreateTab("Scripts | Paid + Free", 0)
-
-Tab:CreateParagraph({Title = "Note", Content = "The hub is open-sourced so you can check the hub for loggers!"})
-
-Tab:CreateButton({
-   Name = "MirandaTween+",
-   Callback = function()
-      loadstring(game:HttpGet("https://pastefy.app/TnWWJ4NS/raw"))()
-   end,
+Tab:CreateParagraph({
+    Title = "Note",
+    Content = "The hub is open-sourced so you can check the hub for loggers!"
 })
 
-Tab:CreateButton({
-   Name = "Auto Secret",
-   Callback = function()
-      loadstring(game:HttpGet("https://tcscripts.discloud.app/scripts/autosecret"))()
-   end,
-})
+-- Botões de scripts
+local scripts = {
+    {Name = "MirandaTween+", URL = "https://pastefy.app/TnWWJ4NS/raw"},
+    {Name = "Auto Secret", URL = "https://tcscripts.discloud.app/scripts/autosecret"},
+    {Name = "Spawner Brainrot", URL = "https://gitlab.com/traxscriptss/traxscriptss/-/raw/main/visual2.lua"},
+    {Name = "Chilli Hub", URL = "https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"},
+    {Name = "Grow a Garden", URL = "https://lunor.dev/loader"},
+    {Name = "99 Noites", URL = "https://raw.githubusercontent.com/kedd063/KdmlScripts/refs/heads/main/99-Night-İn-The-Forest"}
+}
 
-Tab:CreateButton({
-   Name = "Spawner Brainrot",
-   Callback = function()
-      loadstring(game:HttpGet("https://gitlab.com/traxscriptss/traxscriptss/-/raw/main/visual2.lua"))()
-   end,
-})
-
-Tab:CreateButton({
-   Name = "Chilli Hub",
-   Callback = function()
-      loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()
-   end,
-})
-
-Tab:CreateButton({
-   Name = "Grow a Garden",
-   Callback = function()
-      loadstring(game:HttpGet("https://lunor.dev/loader"))()
-   end,
-})
-
-Tab:CreateButton({
-   Name = "99 Noites",
-   Callback = function()
-      loadstring(game:HttpGet("https://raw.githubusercontent.com/kedd063/KdmlScripts/refs/heads/main/99-Night-İn-The-Forest"))()
-   end,
-})
+for _, scriptInfo in pairs(scripts) do
+    Tab:CreateButton({
+        Name = scriptInfo.Name,
+        Callback = function()
+            loadstring(game:HttpGet(scriptInfo.URL, true))()
+        end
+    })
+end
 
 -- Aba de Configurações
 local SetTab = Window:CreateTab("Settings", 0)
-
-SetTab:CreateParagraph({Title = "Note", Content = "Créditos: @liphyr"})
-
-SetTab:CreateButton({
-   Name = "Destroy Gui",
-   Callback = function()
-      Rayfield:Destroy()
-   end,
+SetTab:CreateParagraph({
+    Title = "Note",
+    Content = "Créditos: @liphyr"
 })
 
 SetTab:CreateButton({
-   Name = "Copiar Discord",
-   Callback = function()
-       setclipboard("https://discord.gg/75PCbuNn")
-       Rayfield:Notify({
-           Title = "Copiado!",
-           Content = "Link do Discord copiado para a área de transferência ✅",
-           Duration = 5,
-           Image = 0
-       })
-   end,
+    Name = "Destroy Gui",
+    Callback = function()
+        Rayfield:Destroy()
+    end
+})
+
+SetTab:CreateButton({
+    Name = "Copiar Discord",
+    Callback = function()
+        setclipboard("https://discord.gg/75PCbuNn")
+        Rayfield:Notify({
+            Title = "Copiado!",
+            Content = "Link do Discord copiado para a área de transferência ✅",
+            Duration = 5
+        })
+    end
 })
