@@ -52,16 +52,8 @@ local Window = Rayfield:CreateWindow({
        FileName = "Key",
        SaveKey = true,
        GrabKeyFromSite = true,
-       GrabKeyFromSiteUrl = "https://raw.githubusercontent.com/igorphxwi-blip/Hub-Lp-/refs/heads/main/keys.json",
-       Callback = function(Key)
-           print("Key válida:", Key)
-           Rayfield:Notify({
-               Title = "Key Aceita ✅",
-               Content = "Bem-vindo, cliente!",
-               Duration = 5,
-               Image = 74306962782905
-           })
-       end
+       GrabKeyFromSiteUrl = "https://raw.githubusercontent.com/igorphxwi-blip/Hub-Lp-/refs/heads/main/keys.txt",
+       Key = {} -- Deixe vazio, pois as chaves serão carregadas do arquivo
    }
 })
 
