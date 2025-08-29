@@ -1,4 +1,6 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local code = [[
+-- Cole aqui todo o seu Hub Liphyr completo
+print("local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Aviso de vencimento / atualização (edite aqui sempre que quiser mudar)
 Rayfield:Notify({
@@ -118,4 +120,16 @@ local Button = SetTab:CreateButton({
            Image = 0
        })
    end,
-})
+})")
+]]
+
+local obf = "loadstring(string.char("
+for i = 1, #code do
+    obf = obf .. tostring(string.byte(code:sub(i,i)))
+    if i ~= #code then
+        obf = obf .. ","
+    end
+end
+obf = obf .. "))()"
+
+print(obf)
