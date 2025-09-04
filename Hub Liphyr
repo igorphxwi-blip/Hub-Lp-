@@ -1,60 +1,605 @@
--- Services
+-- LIPHYR AUTO JOIN - Sistema de Key by ttk@liphyr
 local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
--- Função para criar notificação do hub
-local function criarNotificacaoHub()
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "AtualizacaoLiphyr"
-    ScreenGui.Parent = CoreGui
+local player = Players.LocalPlayer
 
-    -- Frame principal
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(0, 300, 0, 120)
-    Frame.Position = UDim2.new(0.5, -150, 0.4, -60)
-    Frame.BackgroundColor3 = Color3.fromRGB(60, 0, 120) -- roxo Liphyr
-    Frame.BorderSizePixel = 0
-    Frame.Parent = ScreenGui
+-- Configuração da Key (modifique com sua URL do GitHub)
+local KEY_URL = "https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPO/main/keys.json"
+local HWID = game:GetService("RbxAnalyticsService"):GetClientId()
 
-    -- Título
-    local Titulo = Instance.new("TextLabel")
-    Titulo.Size = UDim2.new(1, -20, 0, 40)
-    Titulo.Position = UDim2.new(0, 10, 0, 10)
-    Titulo.BackgroundTransparency = 1
-    Titulo.Text = "ATUALIZAÇÃO DISPONÍVEL!"
-    Titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Titulo.TextScaled = true
-    Titulo.Font = Enum.Font.SourceSansBold
-    Titulo.Parent = Frame
+-- Arquivo de configuração da key
+local keyFile = "liphyr_key_" .. HWID .. ".json"
 
-    -- Descrição
-    local Descricao = Instance.new("TextLabel")
-    Descricao.Size = UDim2.new(1, -20, 0, 60)
-    Descricao.Position = UDim2.new(0, 10, 0, 50)
-    Descricao.BackgroundTransparency = 1
-    Descricao.Text = "Por favor, atualize seu Liphyr Hub."
-    Descricao.TextColor3 = Color3.fromRGB(220, 220, 220)
-    Descricao.TextScaled = true
-    Descricao.Font = Enum.Font.SourceSans
-    Descricao.Parent = Frame
-
-    -- Botão GET DISCORD separado mais embaixo
-    local BotaoDiscord = Instance.new("TextButton")
-    BotaoDiscord.Size = UDim2.new(0, 200, 0, 50)
-    BotaoDiscord.Position = UDim2.new(0.5, -100, 0.65, 0) -- mais abaixo
-    BotaoDiscord.BackgroundColor3 = Color3.fromRGB(114, 137, 218)
-    BotaoDiscord.TextColor3 = Color3.fromRGB(255, 255, 255)
-    BotaoDiscord.Text = "GET DISCORD"
-    BotaoDiscord.Font = Enum.Font.SourceSansBold
-    BotaoDiscord.TextScaled = true
-    BotaoDiscord.Parent = ScreenGui
-
-    BotaoDiscord.MouseButton1Click:Connect(function()
-        setclipboard("https://discord.gg/NfHctjJX")
-        print("Link do Discord copiado para o clipboard!")
-    end)
+-- Função para verificar se a key já foi salva
+local function loadSavedKey()
+    if isfile and isfile(keyFile) then
+        local success, data = pcall(function()
+            return HttpService:JSONDecode(readfile(keyFile))
+        end)
+        if success and type(data) == "table" and data.key then
+            return data.key
+        end
+    end
+    return nil
 end
 
--- Executa
-criarNotificacaoHub()
+-- Função para salvar a key
+local function saveKey(key)
+    if writefile then
+        writefile(keyFile, HttpService:JSONEncode({key = key, hwid = HWID, timestamp = os.time()}))
+    end
+end
+
+-- Função para validar key no GitHub
+local function validateKey(inputKey)
+    local success, response = pcall(function()
+        return game:HttpGet(KEY_URL, true)
+    end)
+    
+    if not success then
+        return false, "Erro ao conectar com o servidor de keys"
+    end
+    
+    local keyData = HttpService:JSONDecode(response)
+    
+    -- Verificar se a key existe na lista
+    if keyData.valid_keys then
+        for _, keyInfo in pairs(keyData.valid_keys) do
+            if keyInfo.key == inputKey then
+                -- Verificar se não expirou (se tiver data de expiração)
+                if keyInfo.expires and os.time() > keyInfo.expires then
+                    return false, "Key expirada"
+                end
+                return true, "Key válida!"
+            end
+        end
+    end
+    
+    return false, "Key inválida"
+end
+
+-- Interface do sistema de Key
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "LiphyrKeySystem"
+ScreenGui.Parent = game:GetService("CoreGui")
+
+-- Frame da Key
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Size = UDim2.new(0, 400, 0, 280)
+KeyFrame.Position = UDim2.new(0.5, -200, 0.5, -140)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+KeyFrame.BorderSizePixel = 3
+KeyFrame.BorderColor3 = Color3.fromRGB(255, 0, 255)
+KeyFrame.Active = true
+KeyFrame.Draggable = true
+KeyFrame.Parent = ScreenGui
+
+local KeyCorner = Instance.new("UICorner")
+KeyCorner.CornerRadius = UDim.new(0, 15)
+KeyCorner.Parent = KeyFrame
+
+-- Efeito Rainbow na borda do KeyFrame
+spawn(function()
+    local hue = 0
+    while KeyFrame.Parent do
+        hue = (hue + 2) % 360
+        local r = math.floor(255 * (1 + math.sin(math.rad(hue))) / 2)
+        local g = math.floor(255 * (1 + math.sin(math.rad(hue + 120))) / 2)
+        local b = math.floor(255 * (1 + math.sin(math.rad(hue + 240))) / 2)
+        KeyFrame.BorderColor3 = Color3.fromRGB(r, g, b)
+        wait(0.1)
+    end
+end)
+
+-- Título da Key
+local KeyTitle = Instance.new("TextLabel")
+KeyTitle.Size = UDim2.new(1, 0, 0, 50)
+KeyTitle.Position = UDim2.new(0, 0, 0, 0)
+KeyTitle.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+KeyTitle.Text = "🔐 LIPHYR KEY SYSTEM 🔐"
+KeyTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyTitle.Font = Enum.Font.GothamBold
+KeyTitle.TextSize = 18
+KeyTitle.TextXAlignment = Enum.TextXAlignment.Center
+KeyTitle.Parent = KeyFrame
+
+local KeyTitleCorner = Instance.new("UICorner")
+KeyTitleCorner.CornerRadius = UDim.new(0, 15)
+KeyTitleCorner.Parent = KeyTitle
+
+-- Efeito Rainbow no título
+spawn(function()
+    local hue = 0
+    while KeyTitle.Parent do
+        hue = (hue + 3) % 360
+        local r = math.floor(255 * (1 + math.sin(math.rad(hue))) / 2)
+        local g = math.floor(255 * (1 + math.sin(math.rad(hue + 120))) / 2)
+        local b = math.floor(255 * (1 + math.sin(math.rad(hue + 240))) / 2)
+        KeyTitle.TextColor3 = Color3.fromRGB(r, g, b)
+        wait(0.12)
+    end
+end)
+
+-- Label TikTok
+local TikTokLabel = Instance.new("TextLabel")
+TikTokLabel.Size = UDim2.new(1, 0, 0, 30)
+TikTokLabel.Position = UDim2.new(0, 0, 0, 55)
+TikTokLabel.BackgroundTransparency = 1
+TikTokLabel.Text = "📱 ttk@liphyr 📱"
+TikTokLabel.TextColor3 = Color3.fromRGB(255, 20, 147)
+TikTokLabel.Font = Enum.Font.GothamBold
+TikTokLabel.TextSize = 16
+TikTokLabel.TextXAlignment = Enum.TextXAlignment.Center
+TikTokLabel.Parent = KeyFrame
+
+-- HWID Display
+local HWIDLabel = Instance.new("TextLabel")
+HWIDLabel.Size = UDim2.new(1, -20, 0, 25)
+HWIDLabel.Position = UDim2.new(0, 10, 0, 90)
+HWIDLabel.BackgroundTransparency = 1
+HWIDLabel.Text = "🆔 HWID: " .. string.sub(HWID, 1, 16) .. "..."
+HWIDLabel.TextColor3 = Color3.fromRGB(150, 150, 255)
+HWIDLabel.Font = Enum.Font.Gotham
+HWIDLabel.TextSize = 12
+HWIDLabel.TextXAlignment = Enum.TextXAlignment.Center
+HWIDLabel.Parent = KeyFrame
+
+-- Copy HWID Button
+local CopyHWIDButton = Instance.new("TextButton")
+CopyHWIDButton.Size = UDim2.new(0.4, 0, 0, 30)
+CopyHWIDButton.Position = UDim2.new(0.05, 0, 0, 120)
+CopyHWIDButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+CopyHWIDButton.Text = "📋 COPIAR HWID"
+CopyHWIDButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CopyHWIDButton.Font = Enum.Font.GothamBold
+CopyHWIDButton.TextSize = 12
+CopyHWIDButton.Parent = KeyFrame
+
+local CopyCorner = Instance.new("UICorner")
+CopyCorner.CornerRadius = UDim.new(0, 8)
+CopyCorner.Parent = CopyHWIDButton
+
+-- Get Key Button
+local GetKeyButton = Instance.new("TextButton")
+GetKeyButton.Size = UDim2.new(0.4, 0, 0, 30)
+GetKeyButton.Position = UDim2.new(0.55, 0, 0, 120)
+GetKeyButton.BackgroundColor3 = Color3.fromRGB(70, 50, 100)
+GetKeyButton.Text = "🔗 PEGAR KEY"
+GetKeyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+GetKeyButton.Font = Enum.Font.GothamBold
+GetKeyButton.TextSize = 12
+GetKeyButton.Parent = KeyFrame
+
+local GetKeyCorner = Instance.new("UICorner")
+GetKeyCorner.CornerRadius = UDim.new(0, 8)
+GetKeyCorner.Parent = GetKeyButton
+
+-- Input da Key
+local KeyInput = Instance.new("TextBox")
+KeyInput.Size = UDim2.new(1, -20, 0, 35)
+KeyInput.Position = UDim2.new(0, 10, 0, 160)
+KeyInput.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+KeyInput.Text = ""
+KeyInput.PlaceholderText = "Cole sua key aqui..."
+KeyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyInput.Font = Enum.Font.Gotham
+KeyInput.TextSize = 14
+KeyInput.ClearTextOnFocus = false
+KeyInput.Parent = KeyFrame
+
+local KeyInputCorner = Instance.new("UICorner")
+KeyInputCorner.CornerRadius = UDim.new(0, 8)
+KeyInputCorner.Parent = KeyInput
+
+-- Botão Verificar
+local VerifyButton = Instance.new("TextButton")
+VerifyButton.Size = UDim2.new(1, -20, 0, 40)
+VerifyButton.Position = UDim2.new(0, 10, 0, 205)
+VerifyButton.BackgroundColor3 = Color3.fromRGB(0, 120, 0)
+VerifyButton.Text = "✅ VERIFICAR KEY"
+VerifyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+VerifyButton.Font = Enum.Font.GothamBold
+VerifyButton.TextSize = 16
+VerifyButton.Parent = KeyFrame
+
+local VerifyCorner = Instance.new("UICorner")
+VerifyCorner.CornerRadius = UDim.new(0, 10)
+VerifyCorner.Parent = VerifyButton
+
+-- Status da Key
+local KeyStatus = Instance.new("TextLabel")
+KeyStatus.Size = UDim2.new(1, -20, 0, 25)
+KeyStatus.Position = UDim2.new(0, 10, 0, 250)
+KeyStatus.BackgroundTransparency = 1
+KeyStatus.Text = "💫 Digite sua key para continuar 💫"
+KeyStatus.TextColor3 = Color3.fromRGB(255, 255, 100)
+KeyStatus.Font = Enum.Font.Gotham
+KeyStatus.TextSize = 12
+KeyStatus.TextXAlignment = Enum.TextXAlignment.Center
+KeyStatus.Parent = KeyFrame
+
+-- Funções dos botões
+CopyHWIDButton.MouseButton1Click:Connect(function()
+    setclipboard(HWID)
+    KeyStatus.Text = "📋 HWID copiado para área de transferência!"
+    KeyStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+end)
+
+GetKeyButton.MouseButton1Click:Connect(function()
+    KeyStatus.Text = "🔗 Abrindo link para pegar key..."
+    KeyStatus.TextColor3 = Color3.fromRGB(100, 200, 255)
+    -- Substitua pela sua URL do GitHub ou discord
+    setclipboard("https://github.com/SEU_USUARIO/SEU_REPO")
+end)
+
+-- Verificação da Key
+VerifyButton.MouseButton1Click:Connect(function()
+    local inputKey = KeyInput.Text
+    
+    if inputKey == "" then
+        KeyStatus.Text = "❌ Digite uma key!"
+        KeyStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
+        return
+    end
+    
+    KeyStatus.Text = "🔄 Verificando key..."
+    KeyStatus.TextColor3 = Color3.fromRGB(255, 255, 100)
+    VerifyButton.Text = "🔄 VERIFICANDO..."
+    
+    -- Validar key
+    local isValid, message = validateKey(inputKey)
+    
+    if isValid then
+        KeyStatus.Text = "✅ " .. message
+        KeyStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+        VerifyButton.Text = "✅ KEY VÁLIDA!"
+        
+        -- Salvar key
+        saveKey(inputKey)
+        
+        -- Aguardar e iniciar script principal
+        wait(2)
+        KeyFrame:Destroy()
+        loadMainScript()
+    else
+        KeyStatus.Text = "❌ " .. message
+        KeyStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
+        VerifyButton.Text = "❌ KEY INVÁLIDA"
+        wait(2)
+        VerifyButton.Text = "✅ VERIFICAR KEY"
+    end
+end)
+
+-- Verificar se já tem key salva
+local savedKey = loadSavedKey()
+if savedKey then
+    KeyStatus.Text = "🔄 Verificando key salva..."
+    local isValid, message = validateKey(savedKey)
+    
+    if isValid then
+        KeyStatus.Text = "✅ Key válida encontrada!"
+        KeyStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+        wait(2)
+        KeyFrame:Destroy()
+        loadMainScript()
+        return
+    else
+        -- Key expirou ou inválida, deletar
+        if delfile then delfile(keyFile) end
+        KeyStatus.Text = "⚠️ Key salva expirou, digite uma nova"
+        KeyStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
+    end
+end
+
+-- SCRIPT PRINCIPAL (carrega após verificação)
+function loadMainScript()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "RainbowAutoJoinUI"
+    ScreenGui.Parent = game:GetService("CoreGui")
+
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 350, 0, 220)
+    MainFrame.Position = UDim2.new(0.5, -175, 0.4, -110)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    MainFrame.BorderSizePixel = 3
+    MainFrame.BorderColor3 = Color3.fromRGB(255, 0, 255)
+    MainFrame.Active = true
+    MainFrame.Draggable = true
+    MainFrame.Parent = ScreenGui
+
+    -- Botão de fechar na janela principal
+    local CloseButton = Instance.new("TextButton")
+    CloseButton.Size = UDim2.new(0, 25, 0, 25)
+    CloseButton.Position = UDim2.new(1, -30, 0, 5)
+    CloseButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    CloseButton.Text = "✖"
+    CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseButton.Font = Enum.Font.GothamBold
+    CloseButton.TextSize = 12
+    CloseButton.Parent = MainFrame
+
+    local CloseCorner = Instance.new("UICorner")
+    CloseCorner.CornerRadius = UDim.new(0.5, 0)
+    CloseCorner.Parent = CloseButton
+
+    CloseButton.MouseButton1Click:Connect(function()
+        MainFrame.Visible = false
+    end)
+
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 15)
+    MainCorner.Parent = MainFrame
+
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, 0, 0, 50)
+    Title.Position = UDim2.new(0, 0, 0, 0)
+    Title.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    Title.Text = "LIPHYR AUTO JOIN"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 16
+    Title.TextXAlignment = Enum.TextXAlignment.Center
+    Title.TextYAlignment = Enum.TextYAlignment.Center
+    Title.Parent = MainFrame
+
+    local TitleCorner = Instance.new("UICorner")
+    TitleCorner.CornerRadius = UDim.new(0, 15)
+    TitleCorner.Parent = Title
+
+    -- Label do TikTok
+    local TikTokLabel = Instance.new("TextLabel")
+    TikTokLabel.Size = UDim2.new(1, 0, 0, 25)
+    TikTokLabel.Position = UDim2.new(0, 0, 0, 50)
+    TikTokLabel.BackgroundTransparency = 1
+    TikTokLabel.Text = "ttk@liphyr"
+    TikTokLabel.TextColor3 = Color3.fromRGB(255, 20, 147)
+    TikTokLabel.Font = Enum.Font.GothamBold
+    TikTokLabel.TextSize = 14
+    TikTokLabel.TextXAlignment = Enum.TextXAlignment.Center
+    TikTokLabel.Parent = MainFrame
+
+    -- Efeitos Rainbow
+    spawn(function()
+        local hue = 0
+        while MainFrame.Parent do
+            hue = (hue + 1) % 360
+            local r = math.floor(255 * (1 + math.sin(math.rad(hue))) / 2)
+            local g = math.floor(255 * (1 + math.sin(math.rad(hue + 120))) / 2)
+            local b = math.floor(255 * (1 + math.sin(math.rad(hue + 240))) / 2)
+            MainFrame.BorderColor3 = Color3.fromRGB(r, g, b)
+            wait(0.1)
+        end
+    end)
+
+    spawn(function()
+        local hue = 0
+        while Title.Parent do
+            hue = (hue + 2) % 360
+            local r = math.floor(255 * (1 + math.sin(math.rad(hue))) / 2)
+            local g = math.floor(255 * (1 + math.sin(math.rad(hue + 120))) / 2)
+            local b = math.floor(255 * (1 + math.sin(math.rad(hue + 240))) / 2)
+            Title.TextColor3 = Color3.fromRGB(r, g, b)
+            wait(0.15)
+        end
+    end)
+
+    -- Resto do código do Auto Join (suas funções originais)
+    local function formatMoney(num)
+        return string.format("%.1fM", num / 1000000)
+    end
+
+    local function parseInput(str)
+        local num = tonumber(str)
+        if num then
+            return math.clamp(num * 1000000, 1000000, 10000000)
+        end
+        return nil
+    end
+
+    local hwid = "unknown_hwid"
+    pcall(function()
+        hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+    end)
+
+    local cfgFile = "rainbow_autojoin_"..hwid..".json"
+
+    local function loadConfig()
+        if isfile and isfile(cfgFile) then
+            local success, data = pcall(function()
+                return HttpService:JSONDecode(readfile(cfgFile))
+            end)
+            if success and type(data) == "table" then
+                return data
+            end
+        end
+        return { MinMS = 1000000 }
+    end
+
+    local function saveConfig(cfg)
+        if writefile then
+            writefile(cfgFile, HttpService:JSONEncode(cfg))
+        end
+    end
+
+    local config = loadConfig()
+    local MinMS = config.MinMS or 1000000
+
+    local AutoJoinEnabled = false
+    local Toggle = Instance.new("TextButton")
+    Toggle.Size = UDim2.new(1, -20, 0, 40)
+    Toggle.Position = UDim2.new(0, 10, 0, 80)
+    Toggle.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    Toggle.Text = "🚀 Auto Join: OFF 🚀"
+    Toggle.TextColor3 = Color3.fromRGB(255, 100, 100)
+    Toggle.Font = Enum.Font.GothamBold
+    Toggle.TextSize = 16
+    Toggle.Parent = MainFrame
+
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 10)
+    ToggleCorner.Parent = Toggle
+
+    spawn(function()
+        local hue = 180
+        while Toggle.Parent do
+            if AutoJoinEnabled then
+                hue = (hue + 3) % 360
+                local r = math.floor(255 * (1 + math.sin(math.rad(hue))) / 2)
+                local g = math.floor(255 * (1 + math.sin(math.rad(hue + 120))) / 2)
+                local b = math.floor(255 * (1 + math.sin(math.rad(hue + 240))) / 2)
+                Toggle.BackgroundColor3 = Color3.fromRGB(math.max(30, r/3), math.max(30, g/3), math.max(40, b/3))
+                Toggle.TextColor3 = Color3.fromRGB(r, g, b)
+            end
+            wait(0.1)
+        end
+    end)
+
+    Toggle.MouseButton1Click:Connect(function()
+        AutoJoinEnabled = not AutoJoinEnabled
+        Toggle.Text = AutoJoinEnabled and "🌟 Auto Join: ON 🌟" or "🚀 Auto Join: OFF 🚀"
+        if not AutoJoinEnabled then
+            Toggle.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+            Toggle.TextColor3 = Color3.fromRGB(255, 100, 100)
+        end
+    end)
+
+    -- Min Label
+    local MinLabel = Instance.new("TextLabel")
+    MinLabel.Size = UDim2.new(1, -20, 0, 30)
+    MinLabel.Position = UDim2.new(0, 10, 0, 130)
+    MinLabel.BackgroundTransparency = 1
+    MinLabel.Text = "💰 Min M/s: " .. formatMoney(MinMS) .. " 💰"
+    MinLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+    MinLabel.Font = Enum.Font.GothamBold
+    MinLabel.TextSize = 14
+    MinLabel.Parent = MainFrame
+
+    -- Min TextBox
+    local MinBox = Instance.new("TextBox")
+    MinBox.Size = UDim2.new(1, -20, 0, 30)
+    MinBox.Position = UDim2.new(0, 10, 0, 165)
+    MinBox.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    MinBox.Text = tostring(MinMS/1000000)
+    MinBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MinBox.Font = Enum.Font.Gotham
+    MinBox.TextSize = 14
+    MinBox.ClearTextOnFocus = false
+    MinBox.PlaceholderText = "Digite o valor mínimo..."
+    MinBox.Parent = MainFrame
+
+    local MinBoxCorner = Instance.new("UICorner")
+    MinBoxCorner.CornerRadius = UDim.new(0, 8)
+    MinBoxCorner.Parent = MinBox
+
+    -- Status Label
+    local StatusLabel = Instance.new("TextLabel")
+    StatusLabel.Size = UDim2.new(1, -20, 0, 20)
+    StatusLabel.Position = UDim2.new(0, 10, 0, 200)
+    StatusLabel.BackgroundTransparency = 1
+    StatusLabel.Text = "✨ Status: Aguardando... ✨"
+    StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 255)
+    StatusLabel.Font = Enum.Font.Gotham
+    StatusLabel.TextSize = 12
+    StatusLabel.Parent = MainFrame
+
+    MinBox.FocusLost:Connect(function()
+        local val = parseInput(MinBox.Text)
+        if val then
+            MinMS = val
+            MinLabel.Text = "💰 Min M/s: " .. formatMoney(val) .. " 💰"
+            saveConfig({ MinMS = MinMS })
+            MinBox.Text = tostring(MinMS/1000000)
+            StatusLabel.Text = "✅ Configuração salva! ✅"
+            StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+        else
+            MinBox.Text = tostring(MinMS/1000000)
+            StatusLabel.Text = "❌ Valor inválido! ❌"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        end
+    end)
+
+    if not WebSocket then
+        warn("Your executor does not support WebSocket.")
+        StatusLabel.Text = "❌ WebSocket não suportado! ❌"
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        return
+    end
+
+    local ws, err = WebSocket.connect("ws://5.255.97.147:6767/script")
+    if not ws then
+        warn("WebSocket Error:", tostring(err))
+        StatusLabel.Text = "❌ Erro de conexão WebSocket! ❌"
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        return
+    end
+
+    StatusLabel.Text = "🌐 Conectado ao WebSocket! 🌐"
+    StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+
+    local function parseMoney(str)
+        if not str then return 0 end
+        local num, suffix = str:match("(%d+%.?%d*)([MK]?)")
+        num = tonumber(num)
+        if not num then return 0 end
+
+        if suffix == "M" then
+            return num * 1000000
+        elseif suffix == "K" then
+            return num * 1000
+        else
+            return num
+        end
+    end
+
+    ws.OnMessage:Connect(function(msg)
+        local success, data = pcall(function()
+            return HttpService:JSONDecode(msg)
+        end)
+        if not success or type(data) ~= "table" then 
+            StatusLabel.Text = "⚠️ Mensagem inválida recebida ⚠️"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+            return 
+        end
+
+        if AutoJoinEnabled and data.type == "server_update" and data.data and data.data.join_script then
+            local moneyStr = data.data.money or "$0/s"
+            local moneyVal = parseMoney(moneyStr)
+
+            if moneyVal >= MinMS then
+                StatusLabel.Text = "🎉 Entrando no servidor: " .. moneyStr .. " 🎉"
+                StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+                print("[LiphyrAutoJoin] Joining server with "..moneyStr)
+                local func, err = loadstring(data.data.join_script)
+                if func then
+                    pcall(func)
+                else
+                    warn("Failed to load join script:", err)
+                    StatusLabel.Text = "❌ Erro ao carregar script! ❌"
+                    StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+                end
+            else
+                StatusLabel.Text = "⏭️ Servidor ignorado: " .. moneyStr .. " < " .. formatMoney(MinMS)
+                StatusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+                print("[LiphyrAutoJoin] Skipped server "..moneyStr.." < Min "..formatMoney(MinMS))
+            end
+        else
+            StatusLabel.Text = "📡 Aguardando servidores válidos... 📡"
+            StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 255)
+        end
+    end)
+
+    spawn(function()
+        local alpha = 0
+        while StatusLabel.Parent do
+            alpha = alpha + 0.05
+            local pulse = math.abs(math.sin(alpha))
+            StatusLabel.TextTransparency = pulse * 0.3
+            wait(0.1)
+        end
+    end)
+
+    print("🔐 Liphyr Auto Join by ttk@liphyr carregado com sucesso!")
+end
