@@ -1,0 +1,13 @@
+{
+  "valid_keys": [
+    {
+      "key": "LIPHYR-2024-ABC123",
+      "expires": 1735689600,
+      "note": "Key premium"
+    },
+    {
+      "key": "LIPHYR-FREE-XYZ789",
+      "expires": null,
+      "note": "Key vitalícia"
+    }
+  ]
